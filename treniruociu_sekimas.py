@@ -27,7 +27,6 @@
 #kokia buvo vidutinė treniruočių trukmė, sumažinote svorius arba kilogramus per tam tikrą laikotarpį ir panašiai. 
 
 
-
 import PySimpleGUI as psg
 import json
 
@@ -43,6 +42,23 @@ def issaugoti_duomenis(duomenys):
     with open('duomenys.json', 'w') as file:
         json.dump(duomenys, file)
 
+def atliekamu_pratimu_vidurkis(duomenys):
+    trukmes = [int(irasas[3]) for irasas in duomenys]
+    if len(trukmes) > 0:
+        vidutine_trukme = sum(trukmes) / len(trukmes)
+        return vidutine_trukme
+    else:
+        return 0
+
+def skaiciuoti_svorio_pokyti(duomenys):
+    if len(duomenys) > 0:
+        pradinis_svoris = float(duomenys[0][4])
+        paskutinis_svoris = float(duomenys[-1][4])
+        svorio_pokytis = pradinis_svoris - paskutinis_svoris
+        return svorio_pokytis
+    else:
+        return 0
+    
 def ivesti_pratima(data, pratimo_pavadinimas, atlikti_kartai, svoris, duomenys):
     duomenys_lenght = len(duomenys)
 
@@ -107,6 +123,7 @@ def pagrindinis_langas(duomenys):
         [psg.Text('Svoris', size=20), psg.Input(key='-SVORIS-', size=20)],
         [psg.Button('Prideti', key='-PRIDETI-'), psg.Button('Redaguoti', key='-REDAGUOTI-'), psg.Button('Istrinti', key='-ISTRINTI-'), psg.Button('Uzdaryti', key='-EXIT-')],
         [psg.Button('Išsaugoti'), psg.Button('Atkurti')],
+        [psg.Button("Apskaičiuoti atliekamų pratimų vidurkį"), psg.Button("Apskaičiuoti svorio pokytį")],
     ]
     
     window = psg.Window("Pagrindinis", layout, size=(900, 600), resizable=True)
@@ -138,6 +155,14 @@ def pagrindinis_langas(duomenys):
                 del duomenys[selected_row_index]
                 issaugoti_duomenis(duomenys)
                 window['-TABLE-'].update(values=duomenys)
+
+        elif event == "Apskaičiuoti atliekamų pratimų vidurkį":
+            vidutine_trukme = atliekamu_pratimu_vidurkis(duomenys)
+            psg.popup(f"Atliekamų pratimų vidurkis: {vidutine_trukme:.2f} kartais")
+
+        elif event == "Apskaičiuoti svorio pokytį":
+            svorio_pokytis = skaiciuoti_svorio_pokyti(duomenys)
+            psg.popup(f"Svorio pokytis: {svorio_pokytis:.2f} kg")
             
         elif event == 'Išsaugoti':
             issaugoti_duomenis(duomenys)
