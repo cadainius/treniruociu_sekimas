@@ -1,32 +1,3 @@
-# 1 Dalis Einaras
-# Duomenų lentelės atvaizdavimas: Pagrindinėje programos dalyje turėsime lentelę
-# kuri atvaizduos sportininko treniruočių duomenis. 
-# Lentelė gali būti sudaryta iš stulpelių,
-# kuriuose bus pateikti šie duomenys: data, atlikti pratimai, pakartojimų skaičius, 
-# kilogramai arba kilogramais atlikti pratimai ir pan.
-
-
-# 2 Dalis Lukas
-#Įvedimo, redagavimo ir trynimo funkcionalumas (CRUD):
-#Leiskite naudotojui įvesti naujas treniruotes į lentelę,
-#redaguoti esamas, trinti nepageidaujamus įrašus ir peržiūrėti turimus įrašus. 
-#Tai įgyvendins CRUD funkcionalumą (Create, Read, Update, Delete).
-
-
-# 3 Dalis Eimantas
-#Duomenų saugojimas į failą ir atkūrimas (JSON/Pickle):
-#Sukurkite funkcijas, kurios leis naudotojui išsaugoti treniruočių duomenis į failą, 
-#naudojant JSON arba Pickle formatą. 
-#Be to, reikės funkcijų, kurios atkuria duomenis iš šio failo į programos lentelę.
-
-
-# 4 Dalis Dainius 
-#Duomenų apdorojimo funkcija:
-#Sukurkite funkciją, kuri apdoros sportininko treniruočių duomenis. 
-#Pavyzdžiui, galite šią funkciją panaudoti, kad apskaičiuotumėte, 
-#kokia buvo vidutinė treniruočių trukmė, sumažinote svorius arba kilogramus per tam tikrą laikotarpį ir panašiai. 
-
-
 import PySimpleGUI as psg
 import json
 
@@ -60,22 +31,19 @@ def skaiciuoti_svorio_pokyti(duomenys):
         return 0
     
 def ivesti_pratima(data, pratimo_pavadinimas, atlikti_kartai, svoris, duomenys):
-    duomenys_lenght = len(duomenys)
-
-    if duomenys_lenght == 0:
+    try:
+        id = max(duomenys, key=lambda x: x[0])[0] + 1
+    except ValueError:
         id = 1
-    else:
-        last_record_item_id = duomenys[-1][0]
-        id = last_record_item_id + 1
 
-    naujas_irasas = (
-        id,
-        data,
-        pratimo_pavadinimas,
-        atlikti_kartai,
-        svoris
-    )
+    try:
+        atlikti_kartai = int(atlikti_kartai)
+        svoris = float(svoris)
+    except (ValueError, TypeError):
+        psg.popup_error('Netinkamas skaičiaus formatas')
+        return
 
+    naujas_irasas = (id, data, pratimo_pavadinimas, atlikti_kartai, svoris)
     duomenys.append(naujas_irasas)
 
 def redaguoti_irasas(duomenys, indeksas):
@@ -93,10 +61,14 @@ def redaguoti_irasas(duomenys, indeksas):
         if event == psg.WIN_CLOSED:
             break
         elif event == '-ATNAUJINTI-':
-            duomenys[indeksas][1] = values['-DATA-']
-            duomenys[indeksas][2] = values['-PRATIMAS-']
-            duomenys[indeksas][3] = values['-ATLIKTIKARTAI-']
-            duomenys[indeksas][4] = values['-SVORIS-']
+            try:
+                duomenys[indeksas][1] = values['-DATA-']
+                duomenys[indeksas][2] = values['-PRATIMAS-']
+                duomenys[indeksas][3] = int(values['-ATLIKTIKARTAI-'])
+                duomenys[indeksas][4] = float(values['-SVORIS-'])
+            except (ValueError, TypeError):
+                psg.popup_error('Netinkamas skaičiaus formatas')
+                continue
             issaugoti_duomenis(duomenys)
             psg.popup('Irasas atnaujintas')
             window.close()
@@ -145,13 +117,15 @@ def pagrindinis_langas(duomenys):
             window['-ATLIKTIKARTAI-'].update('')
             window['-SVORIS-'].update('')
         elif event == '-REDAGUOTI-':
-            selected_row_index = values['-TABLE-'][0]
-            if selected_row_index is not None:
+            selected_rows = values['-TABLE-']
+            if selected_rows:
+                selected_row_index = selected_rows[0]
                 redaguoti_irasas(duomenys, selected_row_index)
                 window['-TABLE-'].update(values=duomenys)
         elif event == '-ISTRINTI-':
-            selected_row_index = values['-TABLE-'][0]
-            if selected_row_index is not None:
+            selected_rows = values['-TABLE-']
+            if selected_rows:
+                selected_row_index = selected_rows[0]
                 del duomenys[selected_row_index]
                 issaugoti_duomenis(duomenys)
                 window['-TABLE-'].update(values=duomenys)
