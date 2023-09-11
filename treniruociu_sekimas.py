@@ -94,7 +94,6 @@ def pagrindinis_langas(duomenys):
         [psg.Text('Atlikti Kartai', size=20), psg.Input(key='-ATLIKTIKARTAI-', size=20)],
         [psg.Text('Svoris', size=20), psg.Input(key='-SVORIS-', size=20)],
         [psg.Button('Prideti', key='-PRIDETI-'), psg.Button('Redaguoti', key='-REDAGUOTI-'), psg.Button('Istrinti', key='-ISTRINTI-'), psg.Button('Uzdaryti', key='-EXIT-')],
-        [psg.Button('Išsaugoti'), psg.Button('Atkurti')],
         [psg.Button("Apskaičiuoti atliekamų pratimų vidurkį"), psg.Button("Apskaičiuoti svorio pokytį")],
     ]
     
