@@ -28,60 +28,125 @@
 
 
 
-import PySimpleGUI as sg
+import PySimpleGUI as psg
 import json
 
-
-### 3 Dalis Eimantas
-
-# Funkcijos, kurios leis išsaugoti ir atkurti treniruočių duomenis į JSON failą
-
-def save_to_json(data):
-    with open('treniruotes.json', 'w') as file:
-        json.dump(data, file, indent=4)
-
-def load_from_json():
+def atkurti_duomenis():
     try:
-        with open('treniruotes.json', 'r') as file:
+        with open('duomenys.json', 'r') as file:
             data = json.load(file)
     except FileNotFoundError:
         data = []
     return data
 
-# PySimpleGUI
+def issaugoti_duomenis(duomenys):
+    with open('duomenys.json', 'w') as file:
+        json.dump(duomenys, file)
 
-sg.theme('DarkBlue3')
+def ivesti_pratima(data, pratimo_pavadinimas, atlikti_kartai, svoris, duomenys):
+    duomenys_lenght = len(duomenys)
 
-layout = [
-    [sg.Button('Pridėti'), sg.Button('Išsaugoti'), sg.Button('Atkurti')],
-    [sg.Table(values=[], headings=['Data', 'Pratimai', 'Pakartojimai', 'Svoris'], auto_size_columns=False, justification='right', num_rows=10, key='table')],
-]
+    if duomenys_lenght == 0:
+        id = 1
+    else:
+        last_record_item_id = duomenys[-1][0]
+        id = last_record_item_id + 1
 
-window = sg.Window('Treniruočių Duomenys', layout, resizable=True)
+    naujas_irasas = (
+        id,
+        data,
+        pratimo_pavadinimas,
+        atlikti_kartai,
+        svoris
+    )
 
-data = load_from_json()
+    duomenys.append(naujas_irasas)
 
-while True:
-    event, values = window.read()
+def redaguoti_irasas(duomenys, indeksas):
+    layout = [
+        [psg.Text('Data', size=20), psg.Input(key='-DATA-', size=20, default_text=duomenys[indeksas][1])],
+        [psg.Text('Pratimas', size=20), psg.Input(key='-PRATIMAS-', size=20, default_text=duomenys[indeksas][2])],
+        [psg.Text('Atlikti Kartai', size=20), psg.Input(key='-ATLIKTIKARTAI-', size=20, default_text=duomenys[indeksas][3])],
+        [psg.Text('Svoris', size=20), psg.Input(key='-SVORIS-', size=20, default_text=duomenys[indeksas][4])],
+        [psg.Button('Atnaujinti', key='-ATNAUJINTI-', size=20, button_color='blue')],
+    ]
 
-    if event == sg.WINDOW_CLOSED:
-        break
+    window = psg.Window('Redaguoti Irasa', layout)
+    while True:
+        event, values = window.read()
+        if event == psg.WIN_CLOSED:
+            break
+        elif event == '-ATNAUJINTI-':
+            duomenys[indeksas][1] = values['-DATA-']
+            duomenys[indeksas][2] = values['-PRATIMAS-']
+            duomenys[indeksas][3] = values['-ATLIKTIKARTAI-']
+            duomenys[indeksas][4] = values['-SVORIS-']
+            issaugoti_duomenis(duomenys)
+            psg.popup('Irasas atnaujintas')
+            window.close()
+            break
+    window.close()
 
-    if event == 'Pridėti':
-        data.append({
-            'Data': values['data'],
-            'Pratimai': values['pratimai'],
-            'Pakartojimai': values['pakartojimai'],
-            'Svoris': values['svoris']
-        })
-        window['table'].update(values=data)
+def pagrindinis_langas(duomenys):
+    psg.set_options(font=("Arial Bold", 14))
+    toprow = ['ID', 'Data', 'Pratimas', 'Atlikti Kartai', 'Svoris(Kg)']
+    tbl1 = psg.Table(values=duomenys, headings=toprow,
+        auto_size_columns=True,
+        display_row_numbers=False,
+        justification='center', key='-TABLE-',
+        selected_row_colors='red on yellow',
+        enable_events=True,
+        expand_x=True,
+        expand_y=True,
+        enable_click_events=True)
+    layout = [
+        [tbl1],
+        [psg.Text('Data', size=20), psg.Input(key='-DATA-', size=20)],
+        [psg.Text('Pratimas', size=20), psg.Input(key='-PRATIMAS-', size=20)],
+        [psg.Text('Atlikti Kartai', size=20), psg.Input(key='-ATLIKTIKARTAI-', size=20)],
+        [psg.Text('Svoris', size=20), psg.Input(key='-SVORIS-', size=20)],
+        [psg.Button('Prideti', key='-PRIDETI-'), psg.Button('Redaguoti', key='-REDAGUOTI-'), psg.Button('Istrinti', key='-ISTRINTI-'), psg.Button('Uzdaryti', key='-EXIT-')],
+        [psg.Button('Išsaugoti'), psg.Button('Atkurti')],
+    ]
+    
+    window = psg.Window("Pagrindinis", layout, size=(900, 600), resizable=True)
+    
+    while True:
+        event, values = window.read()
+        if event == psg.WIN_CLOSED or event == '-EXIT-':
+            break
+        if event == '-PRIDETI-':
+            data = values['-DATA-']
+            pratimas = values['-PRATIMAS-']
+            atlikti_kartai = values['-ATLIKTIKARTAI-']
+            svoris = values['-SVORIS-']
+            ivesti_pratima(data, pratimas, atlikti_kartai, svoris, duomenys)
+            window['-TABLE-'].update(values=duomenys)
+            issaugoti_duomenis(duomenys)
+            window['-DATA-'].update('')
+            window['-PRATIMAS-'].update('')
+            window['-ATLIKTIKARTAI-'].update('')
+            window['-SVORIS-'].update('')
+        elif event == '-REDAGUOTI-':
+            selected_row_index = values['-TABLE-'][0]
+            if selected_row_index is not None:
+                redaguoti_irasas(duomenys, selected_row_index)
+                window['-TABLE-'].update(values=duomenys)
+        elif event == '-ISTRINTI-':
+            selected_row_index = values['-TABLE-'][0]
+            if selected_row_index is not None:
+                del duomenys[selected_row_index]
+                issaugoti_duomenis(duomenys)
+                window['-TABLE-'].update(values=duomenys)
+            
+        elif event == 'Išsaugoti':
+            issaugoti_duomenis(duomenys)
+            psg.popup('Duomenys išsaugoti')
 
-    if event == 'Išsaugoti':
-        save_to_json(data)
-        sg.popup('Duomenys išsaugoti')
+        elif event == 'Atkurti':
+            data = atkurti_duomenis()
+            window['-TABLE-'].update(values=data)    
+    window.close()
 
-    if event == 'Atkurti':
-        data = load_from_json()
-        window['table'].update(values=data)
-
-window.close()
+duom_json = atkurti_duomenis()
+pagrindinis_langas(duom_json)
