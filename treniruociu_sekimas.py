@@ -148,3 +148,5 @@ def pagrindinis_langas(duomenys):
 
 duom_json = atkurti_duomenis()
 pagrindinis_langas(duom_json)
+
+"""Veikianti """
